@@ -20,15 +20,15 @@ import serial.tools.list_ports
 from packaging import version
 
 
-try:
-    from PySide6 import QtCore
-except ImportError:
-    QtCore = None
+# try:
+#     from PySide6 import QtCore
+# except ImportError:
+#     QtCore = None
 
-try:
-    import pyqtgraph as pg
-except ImportError:
-    pg = None
+# try:
+#     import pyqtgraph as pg
+# except ImportError:
+#     pg = None
 
 try:
     from acconeer.exptool._winusbcdc.winusbpy import WinUsbPy
@@ -271,17 +271,17 @@ def color_cycler(i=0):
     return category10[i % len(category10)]
 
 
-def pg_pen_cycler(i=0, style=None, width=2):
-    pen = pg.mkPen(color_cycler(i), width=width)
-    if style == "--":
-        pen.setStyle(QtCore.Qt.DashLine)
-    elif style is not None:
-        pen.setStyle(style)
-    return pen
+# def pg_pen_cycler(i=0, style=None, width=2):
+#     pen = pg.mkPen(color_cycler(i), width=width)
+#     if style == "--":
+#         pen.setStyle(QtCore.Qt.DashLine)
+#     elif style is not None:
+#         pen.setStyle(style)
+#     return pen
 
 
-def pg_brush_cycler(i=0):
-    return pg.mkBrush(color_cycler(i))
+# def pg_brush_cycler(i=0):
+#     return pg.mkBrush(color_cycler(i))
 
 
 class SmoothMax:
@@ -410,7 +410,7 @@ def pg_setup_polar_plot(plot, max_r=1):
         text = str(int(deg)) + "\u00b0"
         ax = (-x + 1) / 2
         ay = (y + 1) / 2
-        text_item = pg.TextItem(text, color="k", anchor=(ax, ay))
+        # text_item = pg.TextItem(text, color="k", anchor=(ax, ay))
         text_item.setPos(max_r * x * 1.02, max_r * y * 1.02)
         plot.addItem(text_item)
         plot.plot([0, max_r * x], [0, max_r * y], pen=pg.mkPen(0.5))
