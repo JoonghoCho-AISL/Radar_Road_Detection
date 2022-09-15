@@ -21,6 +21,7 @@ class ExampleArgumentParser(ArgumentParser):
             "--ip-address",
             dest="ip_address",
             metavar="address",
+            default='127.0.0.1'
         )
         server_group.add_argument(
             "--usb-device",

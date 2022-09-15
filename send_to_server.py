@@ -7,20 +7,25 @@ from multiprocessing import Process, Queue, Pipe
 import argparse
 from kafka import KafkaProducer
 from json import dumps
+import numpy as np
+import time
 
-def sender(producer, conn):
-    while True:
-        data = conn.recv()
-        if data == False:
-            break
-        else:
-            producer.send('radar_joongho', data)
+# def sender(label, producer, q):
 
-def main(data_len, conn):
+#     while True:
+#         # data = q.get()
+#         # encode_data = np.array2string(data)
+#         test = {'hello' : 'hello'}
+#         producer.send('radar_joongho', value = test)
+#         # producer.send('radar_joongho', value = {label : encode_data})
+#         # print('send')
+
+def main(data_len, label, producer):
     args = a121.ExampleArgumentParser().parse_args()
     et.utils.config_logging(args)
 
     client = a121.Client(**a121.get_client_args(args))
+    # client.ip_address = '127.0.0.1'
     client.connect()
     #start_distance = start_point * 2.5mm
     start_distance = 100
@@ -46,37 +51,57 @@ def main(data_len, conn):
             #     hwaas=20,
             # ),
         ],
-        sweeps_per_frame = 64,
+        sweeps_per_frame = 10,
         frame_rate = 30,
     )
+    session_config = a121.SessionConfig(
+    [
+        {
+            2: sensor_config,
+        },
+    ],
+    extended=True,
+)
 
-    client.setup_session(sensor_config)
+    # client.setup_session(sensor_config)
+    client.setup_session(session_config)
     client.start_session()
-    label = input('Type label')
-
+    
+    start = time.time()
     for i in range(data_len):
         result = client.get_next()
-        conn.send(result)
-        # print(f"\nResult {i + 1} subframes:")
-        print(result.subframes)
+        # print(result.frame)
+        # q.put(result.frame)
+        data = np.array2string(result.frame)
+        send_data = {label : data}
+        producer.send('radar_joongho', value = send_data)
+    print('time : ', time.time() - start)
 
     client.stop_session()
     client.disconnect()
 
 if __name__ == '__main__':
 
-    data_len = 30000
+    data_len = 30
 
     parent_conn, child_conn = Pipe()
-
+    queue = Queue()
     producer = KafkaProducer(
-    acks = 0, 
-    compression_type = 'gzip', 
-    bootstrap_servers = ['203.250.148.120:20517'],
-    value_serializer = lambda v: dumps(v).encode('utf-8')
+        acks = 0, 
+        compression_type = 'gzip', 
+        bootstrap_servers = ['203.250.148.120:20517'],
+        value_serializer = lambda v: dumps(v).encode('utf-8')
     )
 
-    p_receiver = Process(target = main, args = (data_len, child_conn))
-    p_receiver.start()
-    p_sender = Process(target = sender, args = (producer, parent_conn))
-    p_sender.start()
+    label = input('Type label')
+    main(data_len, label, producer)
+    # p_receiver = Process(target = main, args = (data_len, child_conn))
+    # p_receiver = Process(target = main, args = (data_len, queue))
+    # p_receiver.start()
+    # # p_sender = Process(target = sender, args = (label, producer, parent_conn))
+    # p_sender = Process(target = sender, args = (label, producer, queue))
+    # p_sender.start()
+
+    # p_receiver.join()
+    # p_sender.join()
+    queue.close()

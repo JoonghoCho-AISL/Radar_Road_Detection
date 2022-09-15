@@ -38,7 +38,7 @@ docs/_build
 *.gz
 
 # Jupyter
-*.ipynb
+#*.ipynb
 
 # Jenkins
 stash/
