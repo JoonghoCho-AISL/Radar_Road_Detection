@@ -80,12 +80,14 @@ def saveplot(history, plot_name):
 def main():
     
     parser = argparse.ArgumentParser(description = 'selt data and gpu')
-    parser.add_argument('-g', '--gpu', action = 'store')
+    parser.add_argument('-g', '--gpu', action = 'store', default = '3')
     parser.add_argument('-d', '--data', action = 'store')
+    parser.add_argument('-m', '--model', action = 'store')
     args = parser.parse_args()
 
     gpu = int(args.gpu)
     data = args.data
+    sel_model = args.model
 
     gpus = tf.config.experimental.list_physical_devices('GPU')
     if gpus:
@@ -162,10 +164,20 @@ def main():
     # X_train, X_test, Y_train, Y_test = train_test_split(Data[:,:-1], Y, random_state = random_seed)
     
     
-    model = basemodel()
+    if sel_model == 'base':
+        model = basemodel()
+        history = train(model, X_train, Y_train, X_test, Y_test)
+        saveplot(history.history, data)
+    elif sel_model == 'rf':
+        import tensorflow_decision_forests as tfdf
+        model = tfdf.keras.RandomForestModel()
+        # history = train(model, X_train, np.argmax(Y_train, axis = 1), X_test, np.argmax(Y_test, axis = 1))
+        history = model.fit(X_train, np.argmax(Y_train, axis = 1), validation_data = (X_test, np.argmax(Y_test, axis = 1)))
+        model.evaluate(X_test, np.argmax(Y_test, axis = 1))
+    else: 
+        pass
     # history = train(model, mean_X_train, mean_Y_train, mean_X_test, mean_Y_test)
-    history = train(model, X_train, Y_train, X_test, Y_test)
-    saveplot(history.history, data)
+    
     
 if __name__ == '__main__':
     main()

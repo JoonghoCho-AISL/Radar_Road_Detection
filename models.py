@@ -18,3 +18,13 @@ class basemodel(Model):
         out = self.fc2(out)
         out = self.out(out)
         return out
+        
+def create_model():
+    model = tf.keras.models.Sequential([
+        layers.Normalization(axis = -1),
+        layers.Dense(units = 10, activation = 'relu'),
+        layers.BatchNormalization(),
+        layers.Dense(units=5, activation = 'relu'),
+        layers.Dense(units = 1, activation = 'relu')
+        ])
+    return model
