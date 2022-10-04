@@ -9,14 +9,19 @@ import time
 from tqdm import tqdm
 import os
 
-def main(label, data_len):
+def main(data_len):
+
+
+    parser = a121.ExampleArgumentParser()
+    parser.add_argument('--name', '-n', action = 'store')
+    args = parser.parse_args()
+    et.utils.config_logging(args)
+    label = args.name
 
     filename = ('./road_data/%s.h5'%(label))
     if os.path.exists(filename):
         os.remove(filename)
     h5_recorder = a121.H5Recorder(filename)
-    args = a121.ExampleArgumentParser().parse_args()
-    et.utils.config_logging(args)
 
     client = a121.Client(ip_address = '127.0.0.1')
     # client.ip_address = '127.0.0.1'
@@ -55,6 +60,6 @@ def main(label, data_len):
 
 if __name__ == '__main__':
 
-    data_len = 30000
-    label = input('Type label : ')
-    main(label, data_len)
+    data_len = 15000
+    # label = input('Type label : ')
+    main(data_len)
