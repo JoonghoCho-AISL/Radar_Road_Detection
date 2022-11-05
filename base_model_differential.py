@@ -149,6 +149,12 @@ def main():
 
     random_seed = 33
 
+    MAX_ABS = np.max([asphalt_abs, sidewalk_abs, floor_abs, ground_abs])
+    asphalt_abs = asphalt_abs / MAX_ABS
+    sidewalk_abs = sidewalk_abs / MAX_ABS
+    floor_abs = floor_abs / MAX_ABS
+    ground_abs = ground_abs / MAX_ABS
+
     norm_asphalt_mean = asphalt_mean / MAX
     norm_sidewalk_mean = sidewalk_mean / MAX
     norm_floor_mean = floor_mean / MAX
@@ -177,29 +183,53 @@ def main():
     if data == 'mean':
     
         if not Pca:    
-            asphalt_mean_X = add_label(norm_asphalt_mean[:,:3], label2idx_Dict['asphalt'])
-            floor_mean_X = add_label(norm_floor_mean[:,:3], label2idx_Dict['floor'])
-            sidewalk_mean_X = add_label(norm_sidewalk_mean[:,:3], label2idx_Dict['sidewalk'])
-            ground_mean_X = add_label(norm_ground_mean[:,:3], label2idx_Dict['ground'])
+            asphalt_X = add_label(norm_asphalt_mean[:,:3], label2idx_Dict['asphalt'])
+            floor_X = add_label(norm_floor_mean[:,:3], label2idx_Dict['floor'])
+            sidewalk_X = add_label(norm_sidewalk_mean[:,:3], label2idx_Dict['sidewalk'])
+            ground_X = add_label(norm_ground_mean[:,:3], label2idx_Dict['ground'])
         
-        else:
-            pre_Data =concat([norm_asphalt_mean, norm_sidewalk_mean, norm_floor_mean, norm_ground_mean])
+        elif diff == 'mean':
+            pre_Data =concat([asphalt_frame_diff_mean, sidewalk_frame_diff_mean, floor_frame_diff_mean, ground_frame_diff_mean])
             pca = PCA(n_components = 'mle')
             pca.fit(pre_Data)
-            if diff == 'mean':
-                asphalt_mean_X = add_label(np.concatenate((pca.transform(norm_asphalt_mean), asphalt_frame_diff_mean), axis = 1), label2idx_Dict['asphalt'])
-                floor_mean_X = add_label(np.concatenate((pca.transform(norm_floor_mean), floor_frame_diff_mean), axis = 1), label2idx_Dict['floor'])
-                sidewalk_mean_X = add_label(np.concatenate((pca.transform(norm_sidewalk_mean), sidewalk_frame_diff_mean), axis = 1), label2idx_Dict['sidewalk'])
-                ground_mean_X = add_label(np.concatenate((pca.transform(norm_ground_mean), ground_frame_diff_mean), axis = 1), label2idx_Dict['ground'])
-            elif diff == 'var':
-                asphalt_mean_X = add_label(np.concatenate((pca.transform(norm_asphalt_mean), asphalt_frame_diff_var), axis = 1), label2idx_Dict['asphalt'])
-                floor_mean_X = add_label(np.concatenate((pca.transform(norm_floor_mean), floor_frame_diff_var), axis = 1), label2idx_Dict['floor'])
-                sidewalk_mean_X = add_label(np.concatenate((pca.transform(norm_sidewalk_mean), sidewalk_frame_diff_var), axis = 1), label2idx_Dict['sidewalk'])
-                ground_mean_X = add_label(np.concatenate((pca.transform(norm_ground_mean), ground_frame_diff_var), axis = 1), label2idx_Dict['ground'])
-
+        
+            asphalt_X = add_label(asphalt_frame_diff_mean, label2idx_Dict['asphalt'])
+            floor_X = add_label(floor_frame_diff_mean, label2idx_Dict['floor'])
+            sidewalk_X = add_label(sidewalk_frame_diff_mean, label2idx_Dict['sidewalk'])
+            ground_X = add_label(ground_frame_diff_mean, label2idx_Dict['ground'])
+            
             pca_path = './pca_diff/mean_pca.pkl'
+        
+        elif diff == 'var':
+            pre_Data =concat([asphalt_frame_diff_var, sidewalk_frame_diff_var, floor_frame_diff_var, ground_frame_diff_var])
+            pca = PCA(n_components = 'mle')
+            pca.fit(pre_Data)
+        
+            asphalt_X = add_label(asphalt_frame_diff_var, label2idx_Dict['asphalt'])
+            floor_X = add_label(floor_frame_diff_var, label2idx_Dict['floor'])
+            sidewalk_X = add_label(sidewalk_frame_diff_var, label2idx_Dict['sidewalk'])
+            ground_X = add_label(ground_frame_diff_var, label2idx_Dict['ground'])
 
-        Data = concat([asphalt_mean_X, floor_mean_X, sidewalk_mean_X, ground_mean_X])
+            pca_path = './pca_diff/var_pca.pkl'
+
+        elif diff == 'all' :
+            asphalt_X = np.concatenate((norm_asphalt_mean, asphalt_frame_diff_var), axis = 1)
+            sidewalk_X = np.concatenate((norm_sidewalk_mean, sidewalk_frame_diff_var), axis = 1)
+            floor_X = np.concatenate((norm_floor_mean, floor_frame_diff_var), axis = 1)
+            ground_X = np.concatenate((norm_ground_mean, ground_frame_diff_var), axis = 1)
+
+            pre_Data =concat([asphalt_X, sidewalk_X, floor_X, ground_X])
+            pca = PCA(n_components = 'mle')
+            pca.fit(pre_Data)
+
+            asphalt_X = add_label(asphalt_X, label2idx_Dict['asphalt'])
+            sidewalk_X = add_label(sidewalk_X, label2idx_Dict['sidewalk'])
+            floor_X = add_label(floor_X, label2idx_Dict['floor'])
+            ground_X = add_label(ground_X, label2idx_Dict['ground'])
+            
+            pca_path = './pca_diff/mean_var_pca.pkl'
+
+        Data = concat([asphalt_X, floor_X, sidewalk_X, ground_X])
 
         Y = tf.one_hot(Data[:,-1], len(label2idx_Dict)).numpy()
 
@@ -212,19 +242,14 @@ def main():
             ground_var_X = add_label(norm_ground_var[:,:4], label2idx_Dict['ground'])
         
         else:
-            pre_Data = concat([norm_asphalt_var, norm_sidewalk_var, norm_floor_var, norm_ground_var])
+            pre_Data =concat([asphalt_frame_diff_var, sidewalk_frame_diff_var, floor_frame_diff_var, ground_frame_diff_var])
             pca = PCA(n_components = 'mle')
             pca.fit(pre_Data)
-            if diff == 'mean':
-                asphalt_var_X = add_label(np.concatenate((pca.transform(norm_asphalt_var), asphalt_frame_diff_mean), axis = 1), label2idx_Dict['asphalt'])
-                floor_var_X = add_label(np.concatenate((pca.transform(norm_floor_var), floor_frame_diff_mean), axis = 1), label2idx_Dict['floor'])
-                sidewalk_var_X = add_label(np.concatenate((pca.transform(norm_sidewalk_var), sidewalk_frame_diff_mean), axis = 1), label2idx_Dict['sidewalk'])
-                ground_var_X = add_label(np.concatenate((pca.transform(norm_ground_var), ground_frame_diff_mean), axis = 1), label2idx_Dict['ground'])
-            elif diff == 'var':
-                asphalt_var_X = add_label(np.concatenate((pca.transform(norm_asphalt_var), asphalt_frame_diff_var), axis = 1), label2idx_Dict['asphalt'])
-                floor_var_X = add_label(np.concatenate((pca.transform(norm_floor_var), floor_frame_diff_var), axis = 1), label2idx_Dict['floor'])
-                sidewalk_var_X = add_label(np.concatenate((pca.transform(norm_sidewalk_var), sidewalk_frame_diff_var), axis = 1), label2idx_Dict['sidewalk'])
-                ground_var_X = add_label(np.concatenate((pca.transform(norm_ground_var), ground_frame_diff_var), axis = 1), label2idx_Dict['ground'])
+        
+            asphalt_var_X = add_label(asphalt_frame_diff_var, label2idx_Dict['asphalt'])
+            floor_var_X = add_label(floor_frame_diff_var, label2idx_Dict['floor'])
+            sidewalk_var_X = add_label(sidewalk_frame_diff_var, label2idx_Dict['sidewalk'])
+            ground_var_X = add_label(ground_frame_diff_var, label2idx_Dict['ground'])
             pca_path = './pca_diff/var_pca.pkl'
         Data = concat([asphalt_var_X, floor_var_X, sidewalk_var_X, ground_var_X])
 
