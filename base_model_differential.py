@@ -182,7 +182,7 @@ def main():
 
     if data == 'mean':
     
-        if not Pca:    
+        if not Pca:
             asphalt_X = add_label(norm_asphalt_mean[:,:3], label2idx_Dict['asphalt'])
             floor_X = add_label(norm_floor_mean[:,:3], label2idx_Dict['floor'])
             sidewalk_X = add_label(norm_sidewalk_mean[:,:3], label2idx_Dict['sidewalk'])
@@ -304,8 +304,6 @@ def main():
 
     else: 
         pass
-    # history = train(model, mean_X_train, mean_Y_train, mean_X_test, mean_Y_test)
-    
-    
+
 if __name__ == '__main__':
     main()
