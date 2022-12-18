@@ -9,7 +9,7 @@ class basemodel(Model):
         self.fc1 = layers.Dense(units = 10, activation = 'relu')
         self.bn1 = layers.BatchNormalization()
         self.fc2 = layers.Dense(units = 5, activation = 'relu')
-        self.out = layers.Dense(units = 4, activation = 'softmax')
+        self.out = layers.Dense(units = 5, activation = 'softmax')
     
     def call(self, x, training = False, mask = None):
         out = self.nl1(x)
@@ -18,7 +18,19 @@ class basemodel(Model):
         out = self.fc2(out)
         out = self.out(out)
         return out
-        
+
+class acconeer(Model):
+    def __init__(self):
+        super(acconeer, self).__init__()
+        self.fc1 = layers.Dense(units = 24, activation = 'relu')
+        self.fc2 = layers.Dense(units = 12, activation = 'relu')
+        self.out = layers.Dense(units = 5, activation = 'softmax')
+    def call(self, x , training = False, mask = None):
+        out = self.fc1(x)
+        out = self.fc2(out)
+        out = self.out(out)
+        return out
+
 def create_model():
     model = tf.keras.models.Sequential([
         layers.Normalization(axis = -1),
