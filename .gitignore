@@ -51,3 +51,10 @@ stash/
 
 # git
 *.orig
+
+# models
+model/
+
+# datas
+road_data/
+

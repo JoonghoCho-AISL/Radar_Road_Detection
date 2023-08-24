@@ -5,16 +5,21 @@ import matplotlib.pyplot as plt
 
 import os
 from acconeer.exptool import a121
-from sklearn.model_selection import train_test_split
+# from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score
 import argparse
 
 import pickle as pkl
 
 from sklearn.decomposition import PCA
 
-from models import basemodel, acconeer
+from models import basemodel, acconeer, non_norm
 
 from preprocess import processing, createDirectory
+
+import seaborn as sns
+
+from collections import deque
 
 idx2label_Dict = {
     0 : 'asphalt',
@@ -25,41 +30,19 @@ idx2label_Dict = {
     4 : 'urethane',
 }
 
-# def saveplot(history, plot_name):
-#     plot_name =  str(plot_name) + '.png'
-#     plt.subplot(4,1,1)
-#     plt.ylim(0,1)
-#     max = np.argmax(history['val_accuracy'])
-#     plt.plot(history['val_accuracy'])
-#     plt.plot(max, history['val_accuracy'][max], 'o', ms = 10, label=round(history['val_accuracy'][max],4))
-#     plt.title('val_accuracy')
-#     plt.legend(loc = 'center right',fontsize=15)
 
-#     plt.subplot(4,1,2)
-#     plt.ylim(0,1)
-#     min = np.argmin(history['val_loss'])
-#     plt.plot(history['val_loss'])
-#     plt.plot(min, history['val_loss'][max], 'o', ms = 10, label=round(history['val_loss'][max],4))
-#     plt.title('val_loss')
-#     plt.legend(loc = 'center right',fontsize=15)
-
-#     plt.subplot(4,1,3)
-#     plt.ylim(0,1)
-#     max = np.argmax(history['accuracy'])
-#     plt.plot(history['accuracy'])
-#     plt.plot(max, history['accuracy'][max], 'o', ms = 10, label=round(history['accuracy'][max],4))
-#     plt.title('accuracy')
-#     plt.legend(loc = 'center right',fontsize=15)
-
-#     plt.subplot(4,1,4)
-#     plt.ylim(0,1)
-#     min = np.argmin(history['loss'])
-#     plt.plot(history['loss'])
-#     plt.plot(min, history['loss'][max], 'o', ms = 10, label=round(history['loss'][max],4))
-#     plt.title('loss')
-#     plt.legend(fontsize=15)
-#     plt.legend(loc = 'center right',fontsize=15)
-#     plt.savefig(plot_name, dpi = 300)
+def heatmap(matrix, title, label):
+    save_path = 'plot/cm.png'
+    df=pd.DataFrame(matrix, index = label, columns = label)
+    plt.figure(figsize=(10,10))
+    sns.heatmap(df, annot=True, fmt = 'd')
+    plt.tick_params(axis='x', top=True, labeltop = True,bottom=False, labelbottom=False)
+    plt.xticks(np.arange(0.5, len(df.columns), 1), df.columns)
+    plt.yticks(np.arange(0.5, len(df.index), 1), df.index)
+    plt.xlabel("Prediction",position = (0.5,1.0+0.05))
+    plt.ylabel("Ground Truth")
+    plt.title(title)
+    plt.savefig('cm.png', format='png', dpi=300)
     
 def saveplot(history, plot_name):
     plot_name =  str(plot_name) + '.png'
@@ -204,6 +187,7 @@ def train(
     Epoch = 50,
     learning_rate = 1e-3,
     cp_path = None,
+    q = None,
     ):
     callback = tf.keras.callbacks.ModelCheckpoint(
         filepath = './model/' + cp_path,
@@ -223,6 +207,17 @@ def train(
                 validation_data = (test_X, test_Y),
                 callbacks = [callback]
                 )
+    model = tf.keras.models.load_model(('./model/'+cp_path))
+    y_pred = np.argmax(model.predict(test_X), axis = 1)
+    y_gt = np.argmax(test_Y, axis = 1)
+    score = accuracy_score(y_gt, y_pred)
+    print('Best score : {:.4f}'.format(score))
+
+    Y_pred_label = np.array([idx2label_Dict[y_pred[i]] for i in range(len(y_pred))])
+    Y_gt_label = np.array([idx2label_Dict[y_gt[i]] for i in range(len(y_gt))])
+    cm = confusion_matrix(Y_gt_label, Y_pred_label)
+    label = ['Asphalt', 'Brick', 'Tile', 'Sandbed', 'Urethane']
+    heatmap(cm, 'Road_surface_classification', label)
     return history
 
 def main():
@@ -233,7 +228,7 @@ def main():
     parser.add_argument('-d', '--data', action = 'store')
     parser.add_argument('-m', '--model', action = 'store', default = 'base')
     args = parser.parse_args()
-
+    q = deque()
     gpu = int(args.gpu)
     data = args.data
     Pca = args.pca
@@ -286,7 +281,11 @@ def main():
         title = './acconeer/' + title
         model = acconeer()
         history = train(model, X_train, Y_train, X_test, Y_test, Epoch = 50, cp_path=title)
-        
+    elif sel_model == 'non_norm':
+        hist_title = './history/non_norm/' + title
+        model = non_norm()
+        history = train(model, X_train, Y_train, X_test, Y_test, Epoch = 50, cp_path=title)
+
     elif sel_model == 'predict':
         path = 'model/basemodel/concat_mean_var_norm_pca'
         model = tf.keras.models.load_model(path)
