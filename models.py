@@ -3,13 +3,13 @@ from tensorflow.keras import layers
 from tensorflow.keras import Model
 
 class basemodel(Model):
-    def __init__(self):
+    def __init__(self, num_classes = 5):
         super(basemodel, self).__init__()
         self.nl1 = layers.Normalization(axis = -1)
         self.fc1 = layers.Dense(units = 10, activation = 'relu')
         self.bn1 = layers.BatchNormalization()
         self.fc2 = layers.Dense(units = 5, activation = 'relu')
-        self.out = layers.Dense(units = 5, activation = 'softmax')
+        self.out = layers.Dense(units = num_classes, activation = 'softmax')
     
     def call(self, x, training = False, mask = None):
         out = self.nl1(x)
