@@ -8,6 +8,8 @@ import json
 import os
 import argparse
 from MobiusAPI import http_post_get
+import pickle as pkl
+from sklearn.decomposition import PCA
 # import tensorflow as tf
 # from models import basemodel_rasp
 # from pub_sub import publishing
@@ -80,6 +82,8 @@ def main():
     save = args.save
     number = args.number
 
+    MAX = 122299391.16999999
+    
     client = radar_raspi(ip_address=ip)
     print('clinet_start')
     if save:
@@ -92,9 +96,12 @@ def main():
         save_data = np.array(temp)
         np.save(file_path, save_data)
     else:
+        pca = pkl.load(open('pca.pkl', 'rb'))
         while True:
             data = client.read_mean_var()
-            send_data = json.dumps(data.tolist())
+            processed_data = data/MAX
+            processed_data = pca.transform(processed_data)
+            send_data = json.dumps(processed_data.tolist())
             URI = '/Mobius/PM_MFBE29/radarSensor/rawData'
             AE_ID = 'PM_MFBE29'
             http_post_get.mobius_post(URI, AE_ID, AE_ID, send_data)
